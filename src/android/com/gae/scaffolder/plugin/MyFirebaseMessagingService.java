@@ -1,11 +1,20 @@
 package com.gae.scaffolder.plugin;
 
 import androidx.core.app.NotificationCompat;
+
 import android.app.NotificationChannel;
+
 import androidx.core.app.NotificationManagerCompat;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.os.Build;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 import android.app.NotificationManager;
@@ -16,15 +25,19 @@ import android.os.Bundle;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.util.Log;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import android.R;
 import android.content.res.Resources;
 import android.content.Intent;
+
 import java.security.SecureRandom;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -282,11 +295,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         PendingIntent contentIntent = PendingIntent.getActivity(this, requestCode, notificationIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
-        int iconId =  0;
+        int iconId = 0;
         String icon = "ic_notification";
         if (icon != null && !"".equals(icon)) {
             iconId = resources.getIdentifier(icon, "drawable", packageName);
-            Log.d(TAG, "using ic_notification "+ iconId);
+            Log.d(TAG, "using ic_notification " + iconId);
         }
         if (iconId == 0) {
             Log.d(TAG, "no icon resource found - using application icon");
@@ -303,6 +316,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setContentIntent(contentIntent)
                 .setSmallIcon(iconId)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        String largeIcon = extras.getString("icon");
+        if (largeIcon != null && !"".equals(largeIcon)) {
+            if (largeIcon.startsWith("http://") || largeIcon.startsWith("https://")) {
+                Bitmap bitmap = getBitmapFromURL(largeIcon);
+                builder.setLargeIcon(bitmap);
+                Log.d(TAG, "using remote large-icon from gcm");
+            }
+        }
 
         int badgeCount = -1;
         String msgcnt = extras.getString("unreadAlertCount");
@@ -336,5 +358,20 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         }
 
         return retval;
+    }
+
+    public Bitmap getBitmapFromURL(String strURL) {
+        try {
+            URL url = new URL(strURL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(15000);
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            return BitmapFactory.decodeStream(input);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
