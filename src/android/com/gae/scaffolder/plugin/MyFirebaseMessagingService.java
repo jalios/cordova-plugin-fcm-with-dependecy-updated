@@ -2,14 +2,9 @@ package com.gae.scaffolder.plugin;
 
 import androidx.core.app.NotificationCompat;
 
-import android.app.NotificationChannel;
-
-import androidx.core.app.NotificationManagerCompat;
-
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Icon;
-import android.os.Build;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +17,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.media.RingtoneManager;
-import android.net.Uri;
+
 import android.util.Log;
 
 import java.util.Map;
@@ -34,14 +28,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.R;
 import android.content.res.Resources;
-import android.content.Intent;
 
 import java.security.SecureRandom;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -306,8 +299,35 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             iconId = context.getApplicationInfo().icon;
         }
 
-        String message = extras.getString("message");
         String title = extras.getString("title");
+        Log.e(TAG, "title: " + title);
+        String message = extras.getString("message");
+        Log.e(TAG, "message: " + message);
+        String secure = "";
+        secure = extras.getString("secure");
+        Log.e(TAG, "secure: " + secure);
+
+        if(secure.equals("true")){
+            String PREFS_NAME = "NativeStorage";
+            SharedPreferences sharedPref = this.getSharedPreferences(PREFS_NAME,MODE_PRIVATE);
+            String key = sharedPref.getString("key", "");
+            key = key.replace("\"", "");
+            Log.e(TAG, "key " + key);
+            String algo = sharedPref.getString("algo", "");
+            algo = algo.replace("\"", "");
+            Log.e(TAG, "algo " + algo);
+            String transformation = sharedPref.getString("transformation", "");
+            transformation = transformation.replace("\"", "");
+            Log.e(TAG, "transformation " + transformation);
+            try {
+                title = SecurityUtils.decrypt(title, key, algo, transformation);
+                Log.e(TAG, "title decrypted : " + title);
+                message = SecurityUtils.decrypt(message, key, algo, transformation);
+                Log.e(TAG, "message decrypted : " + message);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(),
                 "JMobile_DEFAULT_CHANNEL_ID")
