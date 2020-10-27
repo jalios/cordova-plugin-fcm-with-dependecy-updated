@@ -307,7 +307,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         secure = extras.getString("secure");
         Log.e(TAG, "secure: " + secure);
 
-        if(secure.equals("true")){
+        if((secure != null) && (secure.equals("true"))){
             String PREFS_NAME = "NativeStorage";
             SharedPreferences sharedPref = this.getSharedPreferences(PREFS_NAME,MODE_PRIVATE);
             String key = sharedPref.getString("key", "");
@@ -320,10 +320,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             transformation = transformation.replace("\"", "");
             Log.e(TAG, "transformation " + transformation);
             try {
-                title = SecurityUtils.decrypt(title, key, algo, transformation);
-                Log.e(TAG, "title decrypted : " + title);
-                message = SecurityUtils.decrypt(message, key, algo, transformation);
-                Log.e(TAG, "message decrypted : " + message);
+                if((key != null && !key.isEmpty()) && (algo != null && !algo.isEmpty()) && (transformation != null && !transformation.isEmpty())){
+                    title = SecurityUtils.decrypt(title, key, algo, transformation);
+                    Log.e(TAG, "title decrypted : " + title);
+                    message = SecurityUtils.decrypt(message, key, algo, transformation);
+                    Log.e(TAG, "message decrypted : " + message);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

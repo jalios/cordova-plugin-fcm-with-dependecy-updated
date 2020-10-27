@@ -14,6 +14,10 @@ import javax.crypto.spec.SecretKeySpec;
 public class SecurityUtils {
 
     public static  String decrypt(String value, String key, String algo, String transformation) throws NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+        algo = algo.replace("\"", "");
+        transformation = transformation.replace("\"", "");
+        key = key.replace("\"", "");
+
         byte[] keyBytes = new byte[0];
         try {
             keyBytes = key.getBytes("UTF-8");
