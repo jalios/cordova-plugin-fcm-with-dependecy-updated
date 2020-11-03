@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.apache.cordova.LOG;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -310,24 +311,28 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if((secure != null) && (secure.equals("true"))){
             String PREFS_NAME = "NativeStorage";
             SharedPreferences sharedPref = this.getSharedPreferences(PREFS_NAME,MODE_PRIVATE);
-            String key = sharedPref.getString("key", "");
-            key = key.replace("\"", "");
-            Log.e(TAG, "key " + key);
-            String algo = sharedPref.getString("algo", "");
-            algo = algo.replace("\"", "");
-            Log.e(TAG, "algo " + algo);
-            String transformation = sharedPref.getString("transformation", "");
-            transformation = transformation.replace("\"", "");
-            Log.e(TAG, "transformation " + transformation);
+
+            String EncryptionMetaData = sharedPref.getString("encryptionMetaData", "");
             try {
-                if((key != null && !key.isEmpty()) && (algo != null && !algo.isEmpty()) && (transformation != null && !transformation.isEmpty())){
-                    title = SecurityUtils.decrypt(title, key, algo, transformation);
-                    Log.e(TAG, "title decrypted : " + title);
-                    message = SecurityUtils.decrypt(message, key, algo, transformation);
-                    Log.e(TAG, "message decrypted : " + message);
+                JSONObject metaData = new JSONObject(EncryptionMetaData);
+                String key = metaData.getString("key");
+                String algo = metaData.getString("algo");
+                String transformation = metaData.getString("transformation");
+                Log.e(TAG, "key: " + key);
+                Log.e(TAG, "algo: " + algo);
+                Log.e(TAG, "transformation: " + transformation);
+                try {
+                    if((key != null && !key.isEmpty()) && (algo != null && !algo.isEmpty()) && (transformation != null && !transformation.isEmpty())){
+                        title = SecurityUtils.decrypt(title, key, algo, transformation);
+                        Log.e(TAG, "title decrypted : " + title);
+                        message = SecurityUtils.decrypt(message, key, algo, transformation);
+                        Log.e(TAG, "message decrypted : " + message);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (JSONException e) {
+                LOG.e(TAG, "JSONException"+ e);
             }
         }
 
